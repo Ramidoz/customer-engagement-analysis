@@ -1,8 +1,10 @@
 import pandas as pd
 import pickle
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder
 import os
+from xgboost import XGBClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score
 
 # 📌 Ensure the models directory exists
 os.makedirs("models", exist_ok=True)
@@ -37,9 +39,24 @@ target = "churned"
 X = df[features]
 y = df[target]
 
-# 📌 Train the ML Model
-model = RandomForestClassifier(n_estimators=50, random_state=42)  # Reduce estimators for efficiency
-model.fit(X, y)
+# 📌 Split data into training and testing sets (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 📌 Train the XGBoost Model
+model = XGBClassifier(
+    n_estimators=100,        # Number of trees
+    learning_rate=0.05,      # Step size shrinkage
+    max_depth=4,             # Maximum depth of trees
+    random_state=42,
+    use_label_encoder=False, # Avoid warnings
+    eval_metric="logloss"    # Recommended for classification
+)
+model.fit(X_train, y_train)
+
+# 📌 Evaluate the Model
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"✅ Model Accuracy: {accuracy:.2f}")
 
 # 📌 Save the trained model
 with open("models/churn_model.pkl", "wb") as model_file:
