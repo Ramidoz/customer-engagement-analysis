@@ -31,6 +31,7 @@ def predict():
     try:
         # Get JSON data from request
         data = request.json
+        print(f"🔍 Received data: {data}")
 
         # Convert input data to DataFrame
         input_data = pd.DataFrame([data])
@@ -54,22 +55,25 @@ def predict():
 
         try:
             customer_segment = kmeans.predict(segment_features)[0]
-            segment_labels = {0: "High-Value", 1: "At-Risk"}
+            segment_labels = {0: "High-Value", 1: "At-Risk"}  # Adjust if needed
             segment_name = segment_labels.get(customer_segment, "Unknown")
             print(f"✅ Assigned Customer Segment: {segment_name}")
         except Exception as e:
             segment_name = "Segmentation Error"
             print(f"🚨 Segmentation Error: {e}")
 
-        return jsonify({
+        response = {
             "churn_prediction": int(prediction),
             "churn_probability": round(probability, 2),
             "customer_segment": segment_name
-        })
+        }
+        print(f"🔍 API Response: {response}")
+
+        return jsonify(response)
 
     except Exception as e:
         print(f"🚨 Error in API: {e}")
         return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)  # Debug mode ON for logs
+    app.run(host="0.0.0.0", port=5000, debug=True)  # Debug mode ON
