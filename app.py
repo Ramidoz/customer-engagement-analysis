@@ -1,6 +1,7 @@
 import pandas as pd
 import pickle
 from flask import Flask, request, jsonify
+from sklearn.preprocessing import StandardScaler
 
 app = Flask(__name__)
 
@@ -21,6 +22,9 @@ try:
     print("✅ K-Means model loaded successfully!")
 except Exception as e:
     print(f"🚨 Error loading K-Means model: {e}")
+
+# ✅ Load StandardScaler (used in `train_model.py`)
+scaler = StandardScaler()
 
 @app.route('/')
 def home():
@@ -53,10 +57,13 @@ def predict():
         # Normalize features for segmentation (same as training)
         segment_features = input_data[["subscription_type_encoded", "price", "billing_cycle", "age"]]
 
+        # ✅ Ensure input is scaled correctly
+        segment_features_scaled = scaler.fit_transform(segment_features)
+
         try:
             # ✅ Debug: Check if segmentation is working
-            print(f"🔍 Features passed to K-Means: {segment_features.to_dict(orient='records')}")
-            customer_segment = kmeans.predict(segment_features)[0]
+            print(f"🔍 Features passed to K-Means: {segment_features_scaled}")
+            customer_segment = kmeans.predict(segment_features_scaled)[0]
             segment_labels = {0: "High-Value", 1: "At-Risk"}  # Modify if needed
             segment_name = segment_labels.get(customer_segment, "Unknown")
             print(f"✅ Assigned Customer Segment: {segment_name}")
