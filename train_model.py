@@ -65,7 +65,7 @@ with open("models/churn_model.pkl", "wb") as model_file:
 # 📌 User Segmentation with K-Means Clustering
 scaler = StandardScaler()
 
-# ✅ Ensure at least 3 clusters exist
+# ✅ Ensure at least 3 clusters exis
 n_clusters = 3
 
 # ✅ Use normalized data for better clustering
