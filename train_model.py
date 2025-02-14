@@ -3,8 +3,12 @@ import pickle
 import os
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score
+
+# ✅ Suppress CPU core warnings
+os.environ["LOKY_MAX_CPU_COUNT"] = "4"
 
 # 📌 Ensure the models directory exists
 os.makedirs("models", exist_ok=True)
@@ -32,7 +36,7 @@ with open("models/label_encoder_gender.pkl", "wb") as f:
 with open("models/label_encoder_subscription.pkl", "wb") as f:
     pickle.dump(label_encoder_subscription, f)
 
-# 📌 Select features for training
+# 📌 Select features for churn prediction
 features = ["age", "gender_encoded", "subscription_type_encoded", "price", "billing_cycle"]
 target = "churned"
 
@@ -44,22 +48,38 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 # 📌 Train the XGBoost Model
 model = XGBClassifier(
-    n_estimators=100,        # Number of trees
-    learning_rate=0.05,      # Step size shrinkage
-    max_depth=4,             # Maximum depth of trees
+    n_estimators=100,
+    learning_rate=0.05,
+    max_depth=4,
     random_state=42,
-    use_label_encoder=False, # Avoid warnings
-    eval_metric="logloss"    # Recommended for classification
+    eval_metric="logloss"  # Removed `use_label_encoder`
 )
 model.fit(X_train, y_train)
 
 # 📌 Evaluate the Model
 y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
-print(f"✅ Model Accuracy: {accuracy:.2f}")
+print(f"✅ Churn Model Accuracy: {accuracy:.2f}")
 
-# 📌 Save the trained model
+# 📌 Save the trained churn prediction model
 with open("models/churn_model.pkl", "wb") as model_file:
     pickle.dump(model, model_file)
 
-print("✅ Model training completed! Files saved in 'models/' directory.")
+# 📌 User Segmentation with K-Means Clustering
+scaler = StandardScaler()
+
+# ✅ Option 1: Reduce clusters to 2 to avoid errors
+n_clusters = 2  # Change this to 3 if the data supports it
+
+# ✅ Option 2: Add `age` to segmentation to improve cluster separation
+X_scaled = scaler.fit_transform(df[["subscription_type_encoded", "price", "billing_cycle", "age"]])
+
+# 📌 Train K-Means Model
+kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+df["customer_segment"] = kmeans.fit_predict(X_scaled)
+
+# 📌 Save the trained K-Means model
+with open("models/customer_segmentation.pkl", "wb") as model_file:
+    pickle.dump(kmeans, model_file)
+
+print("✅ User segmentation completed! Files saved in 'models/' directory.")
