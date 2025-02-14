@@ -16,16 +16,10 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > ~/.ssh/ramidoz.pem
+          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/ramidoz.pem
           chmod 400 ~/.ssh/ramidoz.pem
           ssh-keyscan -H 3.139.84.151 >> ~/.ssh/known_hosts
 
-      - name: SSH into AWS and Deploy
+      - name: Test SSH Connection
         run: |
-          ssh -i ~/.ssh/id_rsa ec2-user@3.139.84.151 << 'EOF'
-          cd /home/ec2-user/Customer\ Engagement\ analysis
-          git pull origin main
-          source venv/bin/activate   # Activate virtual environment (if using)
-          pip install -r requirements.txt  # Install dependencies
-          sudo systemctl restart flaskapp   # Restart app (if applicable)
-          EOF
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ramidoz.pem ec2-user@3.139.84.151 "echo '✅ SSH Connection Successful!'"
