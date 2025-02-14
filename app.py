@@ -68,4 +68,4 @@ def download_report():
     return jsonify({"message": "Report saved as customer_engagement_report.csv"})
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=5000)  # ✅ Ensure it's accessible on EC2
+    app.run(debug=True, host="0.0.0.0", port=5000)  # ✅ Ensure it's accessible on EC
