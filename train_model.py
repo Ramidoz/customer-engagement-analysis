@@ -7,10 +7,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import accuracy_score
 
-# ✅ Suppress CPU core warnings
-os.environ["LOKY_MAX_CPU_COUNT"] = "4"
-
-# 📌 Ensure the models directory exists
+# ✅ Ensure the models directory exists
 os.makedirs("models", exist_ok=True)
 
 # 📌 Load the Cleaned Dataset
@@ -52,7 +49,7 @@ model = XGBClassifier(
     learning_rate=0.05,
     max_depth=4,
     random_state=42,
-    eval_metric="logloss"  # Removed `use_label_encoder`
+    eval_metric="logloss"
 )
 model.fit(X_train, y_train)
 
@@ -68,10 +65,10 @@ with open("models/churn_model.pkl", "wb") as model_file:
 # 📌 User Segmentation with K-Means Clustering
 scaler = StandardScaler()
 
-# ✅ Option 1: Reduce clusters to 2 to avoid errors
-n_clusters = 2  # Change this to 3 if the data supports it
+# ✅ Ensure at least 3 clusters exist
+n_clusters = 3
 
-# ✅ Option 2: Add `age` to segmentation to improve cluster separation
+# ✅ Use normalized data for better clustering
 X_scaled = scaler.fit_transform(df[["subscription_type_encoded", "price", "billing_cycle", "age"]])
 
 # 📌 Train K-Means Model
