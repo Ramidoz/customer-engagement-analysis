@@ -10,7 +10,7 @@ API_URL = "http://3.139.84.151:5000/predict"
 def index():
     prediction = None
     probability = None
-    customer_segment = None
+    customer_segment = None  # Ensure it's initialized
 
     if request.method == "POST":
         # Get input from form
@@ -35,7 +35,7 @@ def index():
             result = response.json()
             prediction = "Churn" if result["churn_prediction"] == 1 else "Active"
             probability = result["churn_probability"]
-            customer_segment = result["customer_segment"]
+            customer_segment = result.get("customer_segment", "Not Available")  # Use .get() to avoid KeyError
 
     return render_template("index.html", prediction=prediction, probability=probability, customer_segment=customer_segment)
 
