@@ -1,7 +1,10 @@
 flask
-matplotlib
-seaborn
 pandas
 numpy
-plotly
 scikit-learn
+matplotlib
+seaborn
+plotly
+requests
+pickle-mixin
+gunicorn
