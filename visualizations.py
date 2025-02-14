@@ -23,7 +23,7 @@ os.makedirs(save_dir, exist_ok=True)
 
 # 📊 **1. Customer Churn Distribution**
 plt.figure(figsize=(8, 5))
-sns.countplot(data=customer_product, x='churned', palette="coolwarm")
+sns.countplot(data=customer_product, x='churned', hue='churned', palette="coolwarm", legend=False)
 plt.title("Customer Churn Distribution")
 plt.xlabel("Churned (1 = Yes, 0 = No)")
 plt.ylabel("Number of Customers")
@@ -48,7 +48,7 @@ plt.show()
 
 # 📞 **3. Support Case Distribution by Channel**
 plt.figure(figsize=(8, 5))
-sns.countplot(data=customer_cases, x='channel', order=customer_cases['channel'].value_counts().index, palette="viridis")
+sns.countplot(data=customer_cases, x='channel', hue='channel', order=customer_cases['channel'].value_counts().index, palette="viridis", legend=False)
 plt.title("Customer Support Cases by Channel")
 plt.xlabel("Support Channel")
 plt.ylabel("Number of Cases")
