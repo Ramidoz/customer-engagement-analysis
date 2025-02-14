@@ -1,56 +1,47 @@
-from flask import Flask, render_template, request, jsonify
-import pickle
 import pandas as pd
+import pickle
+from flask import Flask, request, jsonify
 
-app = Flask(__name__, template_folder="web_app/templates")
+# 📌 Step 1: Load the Trained Model and Encoders
+app = Flask(__name__)
 
-# Load Model & Encoders
-with open("models/churn_model.pkl", "rb") as file:
-    model = pickle.load(file)
+with open("models/churn_model.pkl", "rb") as model_file:
+    model = pickle.load(model_file)
 
-with open("models/label_encoder_gender.pkl", "rb") as file:
-    label_encoder_gender = pickle.load(file)
+with open("models/label_encoder_gender.pkl", "rb") as f:
+    label_encoder_gender = pickle.load(f)
+with open("models/label_encoder_subscription.pkl", "rb") as f:
+    label_encoder_subscription = pickle.load(f)
 
-with open("models/label_encoder_subscription.pkl", "rb") as file:
-    label_encoder_subscription = pickle.load(file)
+@app.route('/')  # Homepage route
+def home():
+    return "✅ Flask API is running!"
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    # ✅ Always initialize these variables
-    prediction_text = "No prediction yet"
-    probability = "N/A"
+@app.route("/predict", methods=["POST"])
+def predict():
+    try:
+        # Get JSON data from request
+        data = request.json
 
-    if request.method == "POST":
-        try:
-            # ✅ Debugging: Print received input
-            print("🔹 Received Input:", request.form)
+        # Convert input data to DataFrame
+        input_data = pd.DataFrame([data])
 
-            # ✅ Extract form data
-            age = int(request.form["age"])
-            gender = request.form["gender"]
-            subscription_type = request.form["subscription_type"]
-            price = float(request.form["price"])
-            billing_cycle = int(request.form["billing_cycle"])
+        # Encode categorical variables
+        input_data["gender_encoded"] = label_encoder_gender.transform([data["gender"]])[0]
+        input_data["subscription_type_encoded"] = label_encoder_subscription.transform([data["subscription_type"]])[0]
 
-            # ✅ Encode categorical values
-            gender_encoded = label_encoder_gender.transform([gender])[0]
-            subscription_encoded = label_encoder_subscription.transform([subscription_type])[0]
+        # Select only required columns
+        input_features = input_data[["age", "gender_encoded", "subscription_type_encoded", "price", "billing_cycle"]]
 
-            # ✅ Make Prediction
-            prediction = model.predict([[age, gender_encoded, subscription_encoded, price, billing_cycle]])[0]
-            probability = model.predict_proba([[age, gender_encoded, subscription_encoded, price, billing_cycle]])[0][1]
+        # Make prediction
+        prediction = model.predict(input_features)[0]
+        probability = model.predict_proba(input_features)[0][1]  # Probability of churn
 
-            # ✅ Convert prediction result
-            prediction_text = "Churned" if prediction == 1 else "Active"
+        return jsonify({"churn_prediction": int(prediction), "churn_probability": round(probability, 2)})
 
-            print(f"🔹 Prediction: {prediction_text}, Probability: {probability:.2f}")
-
-        except Exception as e:
-            print(f"❌ Error in Prediction: {e}")
-            prediction_text = "Error in prediction"
-            probability = "N/A"
-
-    return render_template("index.html", prediction=prediction_text, probability=probability)
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=False)  # Disable debug mode for production
+##

@@ -1,47 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>🔮 Churn Prediction</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Prediction</title>
 </head>
 <body>
-    <h1>🔮 Churn Prediction</h1>
-    <form method="POST">
+    <h2>Customer Churn Prediction</h2>
+
+    <form method="post">
         <label>Age:</label>
-        <input type="number" name="age" required>
-        <br>
+        <input type="number" name="age" required><br><br>
 
         <label>Gender:</label>
         <select name="gender">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-        </select>
-        <br>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+        </select><br><br>
 
-       <label for="subscription_type">Subscription Type:</label>
-        <select id="subscription_type" name="subscription_type">
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
-        <option value="trial">Trial</option>
-        </select>
-        <br>
+        <label>Subscription Type:</label>
+        <select name="subscription_type">
+            <option value="annual_subscription">Annual</option>
+            <option value="monthly_subscription">Monthly</option>
+        </select><br><br>
 
-        <label>Price:</label>
-        <input type="number" step="0.01" name="price" required>
-        <br>
+        <label>Price ($):</label>
+        <input type="number" name="price" step="0.01" required><br><br>
 
-        <label>Billing Cycle:</label>
-        <input type="number" name="billing_cycle" required>
-        <br>
+        <label>Billing Cycle (Months):</label>
+        <input type="number" name="billing_cycle" required><br><br>
 
         <button type="submit">Predict</button>
     </form>
 
     {% if prediction %}
-        <h2>Prediction: {{ prediction }}</h2>
-        <h3>Probability: {{ probability }}</h3>
+        <h3>Prediction: {{ prediction }}</h3>
+        <p>Churn Probability: {{ probability }}</p>
     {% endif %}
-
-    <br>
-    <a href="/dashboard">📊 Go to Dashboard</a>
 </body>
 </html>
