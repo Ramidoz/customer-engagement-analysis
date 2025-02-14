@@ -1,0 +1,31 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main  # Runs when you push to 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 3.139.84.151 >> ~/.ssh/known_hosts
+
+      - name: SSH into AWS and Deploy
+        run: |
+          ssh -i ~/.ssh/id_rsa ec2-user@3.139.84.151 << 'EOF'
+          cd /home/ec2-user/Customer\ Engagement\ analysis
+          git pull origin main
+          source venv/bin/activate   # Activate virtual environment (if using)
+          pip install -r requirements.txt  # Install dependencies
+          sudo systemctl restart flaskapp   # Restart app (if applicable)
+          EOF
