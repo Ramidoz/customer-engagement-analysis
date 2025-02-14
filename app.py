@@ -28,7 +28,7 @@ def plot_to_base64(fig):
 # Homepage Route
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('web_app/templates/index.html')
 
 
 # Visualizations Route
@@ -47,7 +47,7 @@ def visualizations():
     plt.title("Customer Signups by Month")
     signup_plot = plot_to_base64(fig2)
 
-    return render_template('visualizations.html', churn_plot=churn_plot, signup_plot=signup_plot)
+    return render_template('web_app/templates/visualizations.html', churn_plot=churn_plot, signup_plot=signup_plot)
 
 
 # Prediction Route
