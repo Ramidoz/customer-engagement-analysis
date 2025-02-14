@@ -4,7 +4,7 @@ import requests
 app = Flask(__name__)
 
 # API endpoint (Replace with your actual EC2 IP)
-API_URL = "http://3.139.84.151:5000/predict"
+API_URL = "http://127.0.0.1:5000/predict"
 
 @app.route("/", methods=["GET", "POST"])
 def index():
