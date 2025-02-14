@@ -7,7 +7,7 @@ import io
 import base64
 import pickle
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="web_app/templates")  # ✅ Ensuring correct templates folder
 
 # Load Data
 df = pd.read_csv("data/cleaned_customer_data.csv")
@@ -16,7 +16,6 @@ df = pd.read_csv("data/cleaned_customer_data.csv")
 with open("model.pkl", "rb") as file:
     model = pickle.load(file)
 
-
 # Function to Create Matplotlib Plots
 def plot_to_base64(fig):
     img = io.BytesIO()
@@ -24,14 +23,12 @@ def plot_to_base64(fig):
     img.seek(0)
     return base64.b64encode(img.getvalue()).decode()
 
-
-# Homepage Route
+# ✅ Homepage Route
 @app.route('/')
 def home():
-    return render_template('web_app/templates/index.html')
+    return render_template('index.html')  # ✅ Corrected
 
-
-# Visualizations Route
+# ✅ Visualizations Route
 @app.route('/visualizations')
 def visualizations():
     # Churn Plot
@@ -47,10 +44,9 @@ def visualizations():
     plt.title("Customer Signups by Month")
     signup_plot = plot_to_base64(fig2)
 
-    return render_template('web_app/templates/visualizations.html', churn_plot=churn_plot, signup_plot=signup_plot)
+    return render_template('visualizations.html', churn_plot=churn_plot, signup_plot=signup_plot)  # ✅ Corrected
 
-
-# Prediction Route
+# ✅ Prediction Route
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
@@ -65,13 +61,11 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-
-# Report Download Route
+# ✅ Report Download Route
 @app.route('/download_report')
 def download_report():
     df.to_csv("customer_engagement_report.csv", index=False)
     return jsonify({"message": "Report saved as customer_engagement_report.csv"})
 
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)  # ✅ Ensure it's accessible on EC2
