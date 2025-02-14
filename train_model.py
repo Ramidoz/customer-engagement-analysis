@@ -1,46 +1,48 @@
 import pandas as pd
 import pickle
-from flask import Flask, request, jsonify
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+import os
 
-# 📌 Step 1: Load the Trained Model and Encoders
-app = Flask(__name__)
+# 📌 Ensure the models directory exists
+os.makedirs("models", exist_ok=True)
 
-with open("models/churn_model.pkl", "rb") as model_file:
-    model = pickle.load(model_file)
+# 📌 Load the Cleaned Dataset
+df = pd.read_csv("data/cleaned_customer_data.csv")
 
-with open("models/label_encoder_gender.pkl", "rb") as f:
-    label_encoder_gender = pickle.load(f)
-with open("models/label_encoder_subscription.pkl", "rb") as f:
-    label_encoder_subscription = pickle.load(f)
+# Convert date columns
+df["signup_date_time"] = pd.to_datetime(df["signup_date_time"])
+df["cancel_date_time"] = pd.to_datetime(df["cancel_date_time"], errors='coerce')
 
-@app.route('/')  # Homepage route
-def home():
-    return "✅ Flask API is running!"
+# Create churn label (1 = Churned, 0 = Active)
+df["churned"] = df["cancel_date_time"].notna().astype(int)
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    try:
-        # Get JSON data from request
-        data = request.json
+# 📌 Encode categorical variables
+label_encoder_gender = LabelEncoder()
+df["gender_encoded"] = label_encoder_gender.fit_transform(df["gender"])
 
-        # Convert input data to DataFrame
-        input_data = pd.DataFrame([data])
+label_encoder_subscription = LabelEncoder()
+df["subscription_type_encoded"] = label_encoder_subscription.fit_transform(df["name"])
 
-        # Encode categorical variables
-        input_data["gender_encoded"] = label_encoder_gender.transform([data["gender"]])[0]
-        input_data["subscription_type_encoded"] = label_encoder_subscription.transform([data["subscription_type"]])[0]
+# 📌 Save label encoders
+with open("models/label_encoder_gender.pkl", "wb") as f:
+    pickle.dump(label_encoder_gender, f)
+with open("models/label_encoder_subscription.pkl", "wb") as f:
+    pickle.dump(label_encoder_subscription, f)
 
-        # Select only required columns
-        input_features = input_data[["age", "gender_encoded", "subscription_type_encoded", "price", "billing_cycle"]]
+# 📌 Select features for training
+features = ["age", "gender_encoded", "subscription_type_encoded", "price", "billing_cycle"]
+target = "churned"
 
-        # Make prediction
-        prediction = model.predict(input_features)[0]
-        probability = model.predict_proba(input_features)[0][1]  # Probability of churn
+X = df[features]
+y = df[target]
 
-        return jsonify({"churn_prediction": int(prediction), "churn_probability": round(probability, 2)})
+# 📌 Train the ML Model
+model = RandomForestClassifier(n_estimators=50, random_state=42)  # Reduce estimators for efficiency
+model.fit(X, y)
 
-    except Exception as e:
-        return jsonify({"error": str(e)})
+# 📌 Save the trained model
+with open("models/churn_model.pkl", "wb") as model_file:
+    pickle.dump(model, model_file)
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)  # Disable debug mode for production
+print("✅ Model training completed! Files saved in 'models/' directory.")
