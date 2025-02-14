@@ -1,44 +1,77 @@
+from flask import Flask, render_template, request, jsonify
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
+import io
+import base64
 import pickle
-from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-# Load the trained model and encoders
-with open("models/churn_model.pkl", "rb") as model_file:
-    model = pickle.load(model_file)
+# Load Data
+df = pd.read_csv("data/cleaned_customer_data.csv")
 
-with open("models/label_encoder_gender.pkl", "rb") as f:
-    label_encoder_gender = pickle.load(f)
-with open("models/label_encoder_subscription.pkl", "rb") as f:
-    label_encoder_subscription = pickle.load(f)
+# Load ML Model
+with open("model.pkl", "rb") as file:
+    model = pickle.load(file)
 
+
+# Function to Create Matplotlib Plots
+def plot_to_base64(fig):
+    img = io.BytesIO()
+    fig.savefig(img, format='png')
+    img.seek(0)
+    return base64.b64encode(img.getvalue()).decode()
+
+
+# Homepage Route
 @app.route('/')
-def index():
-    """ Serve the main dashboard """
-    return render_template("index.html")
+def home():
+    return render_template('index.html')
 
-@app.route("/predict", methods=["POST"])
+
+# Visualizations Route
+@app.route('/visualizations')
+def visualizations():
+    # Churn Plot
+    fig1, ax1 = plt.subplots(figsize=(6, 4))
+    sns.countplot(data=df, x='churn', hue='churn', palette="coolwarm", legend=False, ax=ax1)
+    plt.title("Churned vs Active Customers")
+    churn_plot = plot_to_base64(fig1)
+
+    # Signup Trends
+    fig2, ax2 = plt.subplots(figsize=(6, 4))
+    df["signup_date_time"] = pd.to_datetime(df["signup_date_time"])
+    df["signup_date_time"].dt.month.value_counts().sort_index().plot(kind="bar", color="skyblue", ax=ax2)
+    plt.title("Customer Signups by Month")
+    signup_plot = plot_to_base64(fig2)
+
+    return render_template('visualizations.html', churn_plot=churn_plot, signup_plot=signup_plot)
+
+
+# Prediction Route
+@app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.json
-        input_data = pd.DataFrame([data])
+        price = float(data["price"])
+        signup_timestamp = pd.to_datetime(data["signup_date_time"]).timestamp()  # Convert to numerical format
 
-        # Encode categorical variables
-        input_data["gender_encoded"] = label_encoder_gender.transform([data["gender"]])[0]
-        input_data["subscription_type_encoded"] = label_encoder_subscription.transform([data["subscription_type"]])[0]
+        prediction = model.predict([[signup_timestamp, price]])[0]
+        result = "Churned" if prediction == 1 else "Active"
 
-        # Select required features
-        input_features = input_data[["age", "gender_encoded", "subscription_type_encoded", "price", "billing_cycle"]]
-
-        # Make prediction
-        prediction = model.predict(input_features)[0]
-        probability = model.predict_proba(input_features)[0][1]
-
-        return jsonify({"churn_prediction": int(prediction), "churn_probability": round(probability, 2)})
-
+        return jsonify({"prediction": result})
     except Exception as e:
         return jsonify({"error": str(e)})
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+
+# Report Download Route
+@app.route('/download_report')
+def download_report():
+    df.to_csv("customer_engagement_report.csv", index=False)
+    return jsonify({"message": "Report saved as customer_engagement_report.csv"})
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

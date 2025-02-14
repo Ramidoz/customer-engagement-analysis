@@ -1,88 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Engagement & Churn Prediction</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-        form { width: 50%; margin: auto; padding: 20px; border: 1px solid #ccc; }
-        input, select { padding: 10px; margin: 5px; width: 80%; }
-        button { padding: 10px; width: 40%; background-color: blue; color: white; border: none; }
-        img { width: 70%; margin-bottom: 20px; }
-        iframe { width: 80%; height: 500px; margin: 20px 0; border: none; }
-    </style>
+    <title>Customer Engagement Dashboard</title>
 </head>
 <body>
     <h1>📊 Customer Engagement Dashboard</h1>
-
-    <h2>🔍 Churn Prediction Form</h2>
-    <form id="prediction-form">
-        <label for="age">Age:</label>
-        <input type="number" id="age" name="age" required><br>
-
-        <label for="gender">Gender:</label>
-        <select id="gender" name="gender">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-        </select><br>
-
-        <label for="subscription_type">Subscription Type:</label>
-        <select id="subscription_type" name="subscription_type">
-            <option value="monthly">Monthly</option>
-            <option value="annual">Annual</option>
-        </select><br>
-
-        <label for="price">Price Paid:</label>
-        <input type="number" id="price" name="price" required><br>
-
-        <label for="billing_cycle">Billing Cycle:</label>
-        <input type="number" id="billing_cycle" name="billing_cycle" required><br>
-
-        <button type="submit">Predict Churn</button>
+    <a href="/visualizations">📈 View Visualizations</a>
+    <br>
+    <a href="/download_report">📥 Download Report</a>
+    <br>
+    <h2>🔮 Churn Prediction</h2>
+    <form action="/predict" method="POST">
+        <label>Signup Date:</label>
+        <input type="date" name="signup_date_time">
+        <label>Price:</label>
+        <input type="number" name="price">
+        <button type="submit">Predict</button>
     </form>
-
-    <h2>Prediction Result</h2>
-    <p id="prediction-result"></p>
-
-    <h2>📈 Customer Churn Distribution</h2>
-    <img src="{{ url_for('static', filename='visualizations/churn_distribution.png') }}" alt="Churn Distribution">
-
-    <h2>📊 Monthly Churn Trends</h2>
-    <img src="{{ url_for('static', filename='visualizations/monthly_churn_trends.png') }}" alt="Monthly Churn Trends">
-
-    <h2>📞 Support Case Distribution</h2>
-    <img src="{{ url_for('static', filename='visualizations/support_case_distribution.png') }}" alt="Support Cases">
-
-    <h2>📅 Customer Signups Over Time</h2>
-    <iframe src="{{ url_for('static', filename='visualizations/customer_signup_trends.html') }}"></iframe>
-
-    <h2>🚀 Customer Churn Over Time</h2>
-    <iframe src="{{ url_for('static', filename='visualizations/customer_churn_trends.html') }}"></iframe>
-
-    <script>
-        document.getElementById('prediction-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
-
-            const formData = {
-                age: document.getElementById('age').value,
-                gender: document.getElementById('gender').value,
-                subscription_type: document.getElementById('subscription_type').value,
-                price: document.getElementById('price').value,
-                billing_cycle: document.getElementById('billing_cycle').value
-            };
-
-            const response = await fetch('/predict', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            const result = await response.json();
-            document.getElementById('prediction-result').innerText =
-                `Churn Prediction: ${result.churn_prediction}, Probability: ${result.churn_probability}`;
-        });
-    </script>
-
 </body>
 </html>
