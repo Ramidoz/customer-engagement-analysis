@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# 📌 Load the trained models and encoders
+# ✅ Load the trained models and encoders
 with open("models/churn_model.pkl", "rb") as model_file:
     model = pickle.load(model_file)
 
@@ -14,7 +14,7 @@ with open("models/label_encoder_gender.pkl", "rb") as f:
 with open("models/label_encoder_subscription.pkl", "rb") as f:
     label_encoder_subscription = pickle.load(f)
 
-# ✅ Debug: Ensure the K-Means model loads
+# ✅ Debug: Ensure the K-Means model loads correctly
 try:
     with open("models/customer_segmentation.pkl", "rb") as f:
         kmeans = pickle.load(f)
@@ -31,6 +31,7 @@ def predict():
     try:
         # Get JSON data from request
         data = request.json
+        print(f"🔍 Received data: {data}")
 
         # Convert input data to DataFrame
         input_data = pd.DataFrame([data])
@@ -53,23 +54,29 @@ def predict():
         segment_features = input_data[["subscription_type_encoded", "price", "billing_cycle", "age"]]
 
         try:
+            # ✅ Debug: Check if segmentation is working
+            print(f"🔍 Features passed to K-Means: {segment_features.to_dict(orient='records')}")
             customer_segment = kmeans.predict(segment_features)[0]
-            segment_labels = {0: "High-Value", 1: "At-Risk"}
+            segment_labels = {0: "High-Value", 1: "At-Risk"}  # Modify if needed
             segment_name = segment_labels.get(customer_segment, "Unknown")
             print(f"✅ Assigned Customer Segment: {segment_name}")
         except Exception as e:
             segment_name = "Segmentation Error"
             print(f"🚨 Segmentation Error: {e}")
 
-        return jsonify({
+        # ✅ Debug: Print final API response
+        response = {
             "churn_prediction": int(prediction),
             "churn_probability": round(probability, 2),
             "customer_segment": segment_name
-        })
+        }
+        print(f"🔍 API Response: {response}")
+
+        return jsonify(response)
 
     except Exception as e:
         print(f"🚨 Error in API: {e}")
         return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)  # Debug mode ON for logs
+    app.run(host="0.0.0.0", port=5000, debug=True)  # Debug mode ON
