@@ -1,67 +1,57 @@
 from flask import Flask, render_template, request, jsonify
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
-import io
-import base64
 import pickle
+import pandas as pd
 
 app = Flask(__name__, template_folder="web_app/templates")
 
-# ✅ Load Data
-data_path = "data/cleaned_customer_data.csv"
-if not os.path.exists(data_path):
-    raise FileNotFoundError(f"❌ Data file '{data_path}' not found!")
-df = pd.read_csv(data_path)
-
-# ✅ Load ML Model from `models/`
-model_path = "models/churn_model.pkl"  # ✅ Updated Path
-if not os.path.exists(model_path):
-    raise FileNotFoundError(f"❌ Model file '{model_path}' not found!")
-
-with open(model_path, "rb") as file:
+# Load Model & Encoders
+with open("models/churn_model.pkl", "rb") as file:
     model = pickle.load(file)
 
-# ✅ Function to Convert Plots to Base64
-def plot_to_base64(fig):
-    img = io.BytesIO()
-    fig.savefig(img, format='png')
-    img.seek(0)
-    return base64.b64encode(img.getvalue()).decode()
+with open("models/label_encoder_gender.pkl", "rb") as file:
+    label_encoder_gender = pickle.load(file)
 
-# ✅ Homepage Route
-@app.route('/')
-def home():
-    return render_template('index.html')
+with open("models/label_encoder_subscription.pkl", "rb") as file:
+    label_encoder_subscription = pickle.load(file)
 
-# ✅ Prediction Route
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        data = request.json
-        if not data:
-            return jsonify({"error": "No input data provided!"}), 400
 
-        # Validate Input
-        if "price" not in data or "signup_date_time" not in data:
-            return jsonify({"error": "Missing 'price' or 'signup_date_time' field!"}), 400
+@app.route("/", methods=["GET", "POST"])
+def index():
+    prediction = None
+    probability = None
 
-        price = float(data["price"])
-        signup_timestamp = pd.to_datetime(data["signup_date_time"], errors='coerce')
+    if request.method == "POST":
+        try:
+            # ✅ Step 1: Debugging - Print form data
+            print("🔹 Received Input:", request.form)
 
-        if pd.isnull(signup_timestamp):
-            return jsonify({"error": "Invalid date format!"}), 400
+            # ✅ Step 2: Extract form data
+            age = int(request.form["age"])
+            gender = request.form["gender"]
+            subscription_type = request.form["subscription_type"]
+            price = float(request.form["price"])
+            billing_cycle = int(request.form["billing_cycle"])
 
-        signup_timestamp = signup_timestamp.timestamp()  # Convert to numerical format
+            # ✅ Step 3: Encode categorical values
+            gender_encoded = label_encoder_gender.transform([gender])[0]
+            subscription_encoded = label_encoder_subscription.transform([subscription_type])[0]
 
-        # ✅ Make Prediction
-        prediction = model.predict([[signup_timestamp, price]])[0]
-        result = "Churned" if prediction == 1 else "Active"
+            # ✅ Step 4: Make Prediction
+            prediction = model.predict([[age, gender_encoded, subscription_encoded, price, billing_cycle]])[0]
+            probability = model.predict_proba([[age, gender_encoded, subscription_encoded, price, billing_cycle]])[0][1]
 
-        return jsonify({"prediction": result})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            # ✅ Step 5: Convert prediction result
+            prediction_text = "Churned" if prediction == 1 else "Active"
 
-if __name__ == '__main__':
+            print(f"🔹 Prediction: {prediction_text}, Probability: {probability:.2f}")
+
+        except Exception as e:
+            print(f"❌ Error in Prediction: {e}")
+            prediction_text = "Error in prediction"
+            probability = "N/A"
+
+    return render_template("index.html", prediction=prediction_text, probability=probability)
+
+
+if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
