@@ -1,21 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Customer Engagement Dashboard</title>
+    <title>🔮 Churn Prediction</title>
 </head>
 <body>
-    <h1>📊 Customer Engagement Dashboard</h1>
-    <a href="/visualizations">📈 View Visualizations</a>
-    <br>
-    <a href="/download_report">📥 Download Report</a>
-    <br>
-    <h2>🔮 Churn Prediction</h2>
-    <form action="/predict" method="POST">
-        <label>Signup Date:</label>
-        <input type="date" name="signup_date_time">
+    <h1>🔮 Churn Prediction</h1>
+    <form method="POST">
+        <label>Age:</label>
+        <input type="number" name="age" required>
+        <br>
+
+        <label>Gender:</label>
+        <select name="gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+        <br>
+
+        <label>Subscription Type:</label>
+        <input type="text" name="subscription_type" required>
+        <br>
+
         <label>Price:</label>
-        <input type="number" name="price">
+        <input type="number" step="0.01" name="price" required>
+        <br>
+
+        <label>Billing Cycle:</label>
+        <input type="number" name="billing_cycle" required>
+        <br>
+
         <button type="submit">Predict</button>
     </form>
+
+    {% if prediction %}
+        <h2>Prediction: {{ prediction }}</h2>
+        <h3>Probability: {{ probability }}</h3>
+    {% endif %}
+
+    <br>
+    <a href="/dashboard">📊 Go to Dashboard</a>
 </body>
 </html>
