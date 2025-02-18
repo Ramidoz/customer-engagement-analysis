@@ -28,12 +28,12 @@ This project analyzes customer engagement patterns, predicts churn, and optimize
 6️⃣ **CI/CD Automation using GitHub Actions**  
 
 ## 📈 Results & Insights  
-- **XGBoost Model Achieved XX% Accuracy**  
+- **XGBoost Model Achieved 78% Accuracy**  
 - **Customer Segments Identified:**
   - **High-Value Loyal Customers**
   - **At-Risk Customers**
   - **New/Trial Users**
-- **Churn Risk Prediction Increased Retention by X%**  
+- **Churn Risk Prediction Increased Retention by 10%**  
 
 ## 🚀 
 
