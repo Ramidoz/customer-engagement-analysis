@@ -35,7 +35,7 @@ This project analyzes customer engagement patterns, predicts churn, and optimize
   - **New/Trial Users**
 - **Churn Risk Prediction Increased Retention by X%**  
 
-## 🚀 How to Run the Project  
+## 🚀 
 
 ### Clone the Repository  
 ```bash
