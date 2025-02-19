@@ -23,8 +23,36 @@ jobs:
       - name: SSH into AWS and Deploy
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ramidoz.pem ec2-user@3.139.84.151 << 'EOF'
+          
           cd "/home/ec2-user/Customer Engagement analysis"
+
+          # ✅ Handle untracked files to avoid git pull failure
+          git reset --hard
           git pull origin main
-          source venv/bin/activate
+          
+          # ✅ Ensure virtual environment exists & activate
+          if [ -d "venv" ]; then
+              source venv/bin/activate
+          else
+              python3 -m venv venv
+              source venv/bin/activate
+          fi
+          
+          # ✅ Upgrade pip & install dependencies
+          pip install --upgrade pip
           pip install -r requirements.txt
+          
+          # ✅ Stop any existing processes
+          pkill -f app.py || true
+          pkill -f dashboard.py || true
+
+          # ✅ Start app.py (API) on port 5000
+          nohup python3 app.py > flask.log 2>&1 &
+
+          # ✅ Start dashboard.py on port 5001
+          nohup python3 web_app/dashboard.py > dashboard.log 2>&1 &
+
+          # ✅ Confirm running processes
+          ps aux | grep python
+
           EOF
