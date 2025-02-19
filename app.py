@@ -73,7 +73,7 @@ def predict():
 
         # ✅ Debug: Print final API response
         response = {
-            "churn_prediction": int(prediction),
+            "churn_predictio": int(prediction),
             "churn_probability": round(probability, 2),
             "customer_segment": segment_name
         }
