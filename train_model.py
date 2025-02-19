@@ -26,7 +26,7 @@ label_encoder_gender = LabelEncoder()
 df["gender_encoded"] = label_encoder_gender.fit_transform(df["gender"])
 
 label_encoder_subscription = LabelEncoder()
-df["subscription_type_encoded"] = label_encoder_subscription.fit_transform(df["subscription_type"])  # ✅ Fixed issue
+df["subscription_type_encoded"] = label_encoder_subscription.fit_transform(df["subscription_type"])
 
 # 📌 Save label encoders
 with open("models/label_encoder_gender.pkl", "wb") as f:
@@ -44,10 +44,14 @@ y = df[target]
 # 📌 Split data into training and testing sets (80% train, 20% test)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# ✅ Scale the data (Only on training set)
+# ✅ Scale the data
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
+
+# 📌 Save the trained scaler (Fix)
+with open("models/scaler.pkl", "wb") as f:
+    pickle.dump(scaler, f)
 
 # 📌 Train the XGBoost Model
 model = XGBClassifier(
@@ -69,7 +73,7 @@ with open("models/churn_model.pkl", "wb") as model_file:
     pickle.dump(model, model_file)
 
 # ✅ User Segmentation with K-Means Clustering
-X_scaled = scaler.fit_transform(df[["subscription_type_encoded", "price", "billing_cycle", "age"]])
+X_scaled = scaler.transform(df[["subscription_type_encoded", "price", "billing_cycle", "age"]])
 
 # ✅ Dynamically determine number of clusters
 n_clusters = min(3, len(X_scaled))  # ✅ Prevents errors when data is small
@@ -82,4 +86,5 @@ df["customer_segment"] = kmeans.fit_predict(X_scaled)
 with open("models/customer_segmentation.pkl", "wb") as model_file:
     pickle.dump(kmeans, model_file)
 
-print("✅ User segmentation completed! Files saved in 'models/' directory.")
+print("✅ Model training completed! Files saved in 'models/' directory.")
+
