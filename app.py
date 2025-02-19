@@ -1,11 +1,30 @@
 import pandas as pd
 import pickle
+import logging
+import os
 from flask import Flask, request, jsonify
 from sklearn.preprocessing import StandardScaler
 
+# ✅ Set up logging
+logging.basicConfig(level=logging.INFO)
+
 app = Flask(__name__)
 
-# ✅ Load the trained models and encoders
+# ✅ Ensure all required models exist
+required_files = [
+    "models/churn_model.pkl",
+    "models/label_encoder_gender.pkl",
+    "models/label_encoder_subscription.pkl",
+    "models/scaler.pkl",
+    "models/customer_segmentation.pkl"
+]
+
+for file in required_files:
+    if not os.path.exists(file):
+        logging.error(f"❌ Missing required file: {file}")
+        exit(1)  # Stop execution if a model file is missing
+
+# ✅ Load models
 with open("models/churn_model.pkl", "rb") as model_file:
     model = pickle.load(model_file)
 
@@ -15,16 +34,15 @@ with open("models/label_encoder_gender.pkl", "rb") as f:
 with open("models/label_encoder_subscription.pkl", "rb") as f:
     label_encoder_subscription = pickle.load(f)
 
-# ✅ Debug: Ensure the K-Means model loads correctly
+with open("models/scaler.pkl", "rb") as f:
+    scaler = pickle.load(f)
+
 try:
     with open("models/customer_segmentation.pkl", "rb") as f:
         kmeans = pickle.load(f)
-    print("✅ K-Means model loaded successfully!")
+    logging.info("✅ K-Means model loaded successfully!")
 except Exception as e:
-    print(f"🚨 Error loading K-Means model: {e}")
-
-# ✅ Load StandardScaler (used in `train_model.py`)
-scaler = StandardScaler()
+    logging.error(f"🚨 Error loading K-Means model: {e}")
 
 @app.route('/')
 def home():
@@ -33,11 +51,10 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        # Get JSON data from request
         data = request.json
-        print(f"🔍 Received data: {data}")
+        logging.info(f"🔍 Received data: {data}")
 
-        # Convert input data to DataFrame
+        # Convert to DataFrame
         input_data = pd.DataFrame([data])
 
         # Encode categorical variables
@@ -49,41 +66,33 @@ def predict():
 
         # Make churn prediction
         prediction = model.predict(input_features)[0]
-        probability = model.predict_proba(input_features)[0][1]  # Probability of churn
+        probability = model.predict_proba(input_features)[0][1]
 
-        # ✅ Debug: Print feature data for segmentation
-        print(f"🔍 Input for Segmentation: {input_features.to_dict(orient='records')}")
-
-        # Normalize features for segmentation (same as training)
+        # Normalize features for segmentation
         segment_features = input_data[["subscription_type_encoded", "price", "billing_cycle", "age"]]
-
-        # ✅ Ensure input is scaled correctly
-        segment_features_scaled = scaler.fit_transform(segment_features)
+        segment_features_scaled = scaler.transform(segment_features)
 
         try:
-            # ✅ Debug: Check if segmentation is working
-            print(f"🔍 Features passed to K-Means: {segment_features_scaled}")
             customer_segment = kmeans.predict(segment_features_scaled)[0]
-            segment_labels = {0: "High-Value", 1: "At-Risk"}  # Modify if needed
+            segment_labels = {0: "High-Value", 1: "At-Risk"}
             segment_name = segment_labels.get(customer_segment, "Unknown")
-            print(f"✅ Assigned Customer Segment: {segment_name}")
         except Exception as e:
             segment_name = "Segmentation Error"
-            print(f"🚨 Segmentation Error: {e}")
+            logging.error(f"🚨 Segmentation Error: {e}")
 
-        # ✅ Debug: Print final API response
+        # API Response
         response = {
             "churn_prediction": int(prediction),
             "churn_probability": round(probability, 2),
             "customer_segment": segment_name
         }
-        print(f"🔍 API Response: {response}")
+        logging.info(f"🔍 API Response: {response}")
 
         return jsonify(response)
 
     except Exception as e:
-        print(f"🚨 Error in API: {e}")
+        logging.error(f"🚨 Error in API: {e}")
         return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)  # Debug mode ON
+    app.run(host="0.0.0.0", port=5000, debug=True)

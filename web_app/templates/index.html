@@ -4,6 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Churn Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: auto;
+            text-align: left;
+        }
+        h2 {
+            text-align: center;
+        }
+        form {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 8px #ccc;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
     <h2>Customer Churn Prediction</h2>
@@ -14,14 +51,14 @@
 
         <label>Gender:</label>
         <select name="gender">
-            <option value="male">Male</option>
-            <option value="female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
         </select><br><br>
 
         <label>Subscription Type:</label>
         <select name="subscription_type">
-            <option value="annual_subscription">Annual</option>
-            <option value="monthly_subscription">Monthly</option>
+            <option value="Annual">Annual</option>
+            <option value="Monthly">Monthly</option>
         </select><br><br>
 
         <label>Price ($):</label>
@@ -34,9 +71,13 @@
     </form>
 
     {% if prediction %}
-        <h3>Prediction: {{ prediction }}</h3>
-        <p>Churn Probability: {{ probability }}</p>
-        <h3>Customer Segment: {{ customer_segment }}</h3>  <!-- ✅ Added this line -->
+        <h3>Prediction:
+            <span style="color: {% if prediction == 'Churn' %}red{% else %}green{% endif %};">
+                {{ prediction }}
+            </span>
+        </h3>
+        <p><strong>Churn Probability:</strong> {{ probability }}</p>
+        <h3>Customer Segment: <span style="color: blue;">{{ customer_segment }}</span></h3>
     {% endif %}
 </body>
 </html>
